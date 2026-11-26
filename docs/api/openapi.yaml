@@ -1,0 +1,67 @@
+openapi: 3.0.3
+info:
+  title: Unity Psychological Thriller Game - Core Persistence & Terminal API
+  version: 1.0.0
+  description: Контракт між клієнтом гри та модулем збереження і віртуального девайса за ДСТУ ISO/IEC/IEEE 29148.
+
+paths:
+  /api/v1/saves/sync:
+    post:
+      summary: Синхронізація та перевірка цілісності стану гри
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaveStateRequest'
+      responses:
+        '200':
+          description: Стан успішно валідовано та збережено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SaveStateResponse'
+        '400':
+          description: Некоректні вхідні дані або пошкоджений JSON
+        '401':
+          description: Неавторизований доступ (недійсний JWT)
+        '409':
+          description: Невідповідність контрольної суми SHA-256
+        '429':
+          description: Занадто багато запитів (Rate limit exceeded)
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    SaveStateRequest:
+      type: object
+      required:
+        - player_id
+        - save_hash_sha256
+        - raw_game_data
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        save_hash_sha256:
+          type: string
+          example: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        raw_game_data:
+          type: string
+
+    SaveStateResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "SYNCHRONIZED"
+        timestamp:
+          type: string
+          format: date-time
